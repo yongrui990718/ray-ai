@@ -7,54 +7,57 @@ export default function PrismApp() {
   const [isListening, setIsListening] = useState(false);
   const [loadingText, setLoadingText] = useState(0);
   
-  // 控制音樂的播放器
   const bgmRef = useRef(null);
 
-  // --- 情緒數據中心：改回最穩定發聲的 SoundHelix 音樂，保留溫柔女聲文案 ---
+  // --- 1. 數據中心：確保路徑與你的 v1-v4.mp3 對應 ---
   const getTheme = () => {
     const m = mood.toLowerCase();
     
-    // 1. 傷心/難過
-    if (m.includes("傷") || m.includes("難過") || m.includes("哭") || m.includes("痛") || m.includes("低落") || m.includes("悲")) {
-      return {
-        color: "from-slate-700 via-gray-800 to-slate-950",
-        slogan: "『眼淚是洗滌心靈的雨水，在灰色的盡頭，希望始終存在。』",
-        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", // 換回原始版
-        tts: "想哭也沒關係喔。我就在這裡陪著你。讓這段旋律帶走難過，微光很快就會出現的。",
-        label: "雨後灰 (Glimmer)"
-      };
-    }
-    // 2. 壓力/疲勞
+    // 1. 壓力/疲勞 (對應 v1.mp3: 辛苦了，承擔了很多)
     if (m.includes("累") || m.includes("壓") || m.includes("煩") || m.includes("撐") || m.includes("重") || m.includes("辛苦")) {
       return {
         color: "from-blue-950 via-slate-900 to-black",
         slogan: "『承載了太多的重量嗎？讓這份深海的藍，包裹你的疲憊。』",
-        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", // 換回原始版
-        tts: "辛苦了。我聽見了你的疲憊。請閉上眼睛，讓這段聲音溫柔地抱抱你。你真的已經做得很好了。",
+        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+        audioFile: "/v1.mp3", 
         label: "深海藍 (Deep Sea)"
       };
     }
-    // 3. 開心/正向
-    if (m.includes("開") || m.includes("棒") || m.includes("喜") || m.includes("好") || m.includes("爽")) {
+    // 2. 焦慮 (對應 v2.mp3: 呼吸好像變急促了)
+    if (m.includes("焦") || m.includes("急") || m.includes("慌") || m.includes("亂") || m.includes("怕") || m.includes("緊")) {
+      return {
+        color: "from-purple-900 via-indigo-900 to-black",
+        slogan: "『在混亂的思緒中，讓我們一起找回呼吸的節奏。』",
+        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        audioFile: "/v2.mp3",
+        label: "迷霧紫 (Mist)"
+      };
+    }
+    // 3. 療癒/開心 (對應 v4.mp3: 繁花盛開的色彩)
+    if (m.includes("開") || m.includes("棒") || m.includes("喜") || m.includes("好") || m.includes("爽") || m.includes("樂")) {
       return {
         color: "from-orange-500 via-yellow-400 to-amber-100",
         slogan: "『你的喜悅正閃耀著金色的光芒，讓世界也因你而亮起。』",
-        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // 換回原始版
-        tts: "太棒了！你的聲音裡藏著陽光呢。讓我們一起把這份好心情，像藝術一樣收藏起來吧。",
+        musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        audioFile: "/v4.mp3",
         label: "活力橘 (Vitality)"
       };
     }
-    // 4. 預設/平靜
+    // 4. 預設/平靜 (對應 v3.mp3: 現在的氛圍很美)
     return {
       color: "from-cyan-600 via-fuchsia-600 to-purple-900",
       slogan: "『情緒如稜鏡，折射出你最純粹的樣貌。』",
-      musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", // 換回原始版
-      tts: "歡迎來到心靈稜鏡。你的每一種感受，都會在這裡轉化為最美的藝術。我們開始放鬆吧。",
+      musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      audioFile: "/v3.mp3",
       label: "極光紫 (Aurora)"
     };
   };
 
   const theme = getTheme();
+
+  const startListening = () => {
+    alert("語音辨識功能目前請先用文字輸入喔！");
+  };
 
   useEffect(() => {
     if (step === 2) {
@@ -64,50 +67,25 @@ export default function PrismApp() {
     }
   }, [step]);
 
-  // --- 播放邏輯 ---
+  // --- 2. 核心播放函式：修正檔名讀取問題 ---
   const playFinalExperience = () => {
-    // 1. 播放背景音樂
+    // 播放背景音樂
     if (bgmRef.current) {
-      bgmRef.current.volume = 0.3; 
-      bgmRef.current.play().catch(e => {
-        alert("請確認設備沒有靜音，或再點擊一次播放按鈕喔！");
+      bgmRef.current.volume = 0.2;
+      bgmRef.current.play().catch(e => console.log("BGM 播放受阻"));
+    }
+
+    // 播放錄音檔 (加上時間戳防止快取錯誤)
+    if (theme.audioFile) {
+      const voiceAudio = new Audio(`${theme.audioFile}?t=${Date.now()}`);
+      voiceAudio.volume = 1.0; 
+      voiceAudio.load(); 
+      voiceAudio.play().catch(e => {
+        console.error("【讀取失敗】請確認檔案確實放在 public 資料夾下。");
+        console.error("嘗試路徑:", theme.audioFile);
+        alert(`找不到檔案: ${theme.audioFile}，請確認檔名已改成 v1-v4.mp3`);
       });
     }
-
-    // 2. 瀏覽器極限調校版女聲
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      const synth = window.speechSynthesis;
-      synth.cancel(); 
-      
-      const utterance = new SpeechSynthesisUtterance(theme.tts);
-      const voices = synth.getVoices();
-      
-      const bestVoice = voices.find(v => 
-        (v.lang.includes('zh-TW') || v.lang.includes('zh-CN') || v.lang.includes('zh-HK')) && 
-        (v.name.includes('Xiaoxiao') || v.name.includes('Siri') || v.name.includes('Yating') || v.name.includes('Hanhan') || v.name.includes('Female'))
-      );
-      
-      if (bestVoice) {
-        utterance.voice = bestVoice;
-      }
-      
-      utterance.lang = "zh-TW";
-      utterance.rate = 0.85; 
-      utterance.pitch = 1.15; 
-      
-      synth.speak(utterance);
-    }
-  };
-
-  const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("您的瀏覽器不支援語音輸入，請使用 Chrome");
-    const recognition = new SpeechRecognition();
-    recognition.lang = "zh-TW";
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onresult = (e) => setMood(e.results[0][0].transcript);
-    recognition.start();
   };
 
   return (
@@ -143,7 +121,7 @@ export default function PrismApp() {
             <div className="text-left font-mono text-[11px] space-y-4 bg-black/60 p-8 rounded-3xl backdrop-blur-md border border-white/10">
               <p className="text-cyan-400">{" >> "} 分析情緒頻率中...</p>
               {loadingText >= 1 && <p className="text-fuchsia-400">{" >> "} 情緒標籤: {theme.label}</p>}
-              {loadingText >= 2 && <p className="text-amber-400">{" >> "} 載入療癒 MP3 音源庫...</p>}
+              {loadingText >= 2 && <p className="text-amber-400">{" >> "} 載入專業人聲療癒包...</p>}
               {loadingText >= 3 && <p className="text-white animate-pulse">{" >> "} 渲染感官空間中...</p>}
             </div>
           </div>
@@ -180,7 +158,6 @@ export default function PrismApp() {
               setStep(1); 
               setMood(""); 
               if(bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; }
-              if(typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
             }} className="text-white/30 text-xs tracking-widest hover:text-white transition-all uppercase">
               — 重新啟動系統 —
             </button>
